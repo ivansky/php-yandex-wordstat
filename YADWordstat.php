@@ -20,10 +20,6 @@ class YADWordstat {
 	private $wait = array();
 	private $complete = array();
 
-	public static function pdo($__pdo){
-		self::$pdo = $__pdo;
-	}
-
 	public static function redis(Redis &$__redis){
 		self::$redis = $__redis;
 	}
@@ -57,7 +53,6 @@ class YADWordstat {
 		$this->request['param'] = array();
 		$this->request['login'] = $this->login;
 		$response = $this->request();
-		//var_dump($response);
 		if(isset($response->data)){
 			return $response->data;
 		}
