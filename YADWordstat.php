@@ -115,7 +115,7 @@ class YADWordstat {
 		
 		$w = preg_replace('/[^a-z0-9'.$RUSSIAN.$TURKISH.$KAZAKH.']+/ui', ' ', $w);
 		$w = preg_replace('/[\s]+/', ' ', $w);
-		return $w;
+		return trim($w);
 	}
 
 	public function delReport($id){
