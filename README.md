@@ -1,4 +1,4 @@
 YADWordstat
 ===========
 
-YandexDirect Wordstat
+YandexDirect Wordstat PHP API
