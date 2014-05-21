@@ -88,8 +88,32 @@ class YADWordstat {
 		return $response->data;
 	}
 	
+	/**
+	 * Remove from string all invalid characters
+	 * Leave only English, Russian, Turkish, Kazakh and Numbers
+	 * @link http://www.unicode.org/charts/
+	 * @param string $w
+	 * @return string
+	 */
 	public static function prepareWord($w){
-		$w = preg_replace('/[^a-z0-9\\x{0410}-\\x{045F}]+/ui', ' ', $w);
+		// АаБбВвГгДдЕеЁёЖжЗзИиЙйКкЛлМм
+		// НнОоПпРрСсТтУуФфХхЦцЧчШшЩщЪъ
+		// ЫыЬьЭэЮюЯя
+		$RUSSIAN = '\\x{0410}-\\x{045F}'; 
+		
+		// çğışöü ÇĞİŞÖÜ
+		$TURKISH = '\\x{00E7}\\x{011F}\\x{0131}\\x{015F}'.
+			'\\x{00F6}\\x{00FC}\\x{00C7}\\x{011E}'.
+			'\\x{0130}\\x{015E}\\x{00D6}\\x{00DC}';
+		
+		//ӘҒҚҢӨҮҰҺІ әғқңөүұһі
+		$KAZAKH = '\\x{04A2}\\x{04A3}\\x{0406}\\x{0456}'.
+			'\\x{0492}\\x{0493}\\x{049A}\\x{049B}'.
+			'\\x{04AE}\\x{04AF}\\x{04B0}\\x{04B1}'.
+			'\\x{04BA}\\x{04BB}\\x{04D8}\\x{04D9}'.
+			'\\x{04E8}\\x{04E9}'; 
+		
+		$w = preg_replace('/[^a-z0-9'.$RUSSIAN.$TURKISH.$KAZAKH.']+/ui', ' ', $w);
 		$w = preg_replace('/[\s]+/', ' ', $w);
 		return $w;
 	}
