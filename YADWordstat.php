@@ -148,7 +148,7 @@ class YADWordstat {
 		$context = stream_context_create($opts);
 
 		# подключаем объединенный с приватным ключом сертификат
-		stream_context_set_option($context, 'ssl', 'local_cert', '/somedir/solid-cert.crt');
+		stream_context_set_option($context, 'ssl', 'local_cert', $this->certdir . '/solid-cert.crt');
 
 		# отправляем запрос и получаем ответ от сервера
 		$result = file_get_contents(self::JSON_URL, 0, $context);
