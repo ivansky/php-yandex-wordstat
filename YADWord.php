@@ -43,26 +43,37 @@ class YADWord {
 		return $i;
 	}
 	
-	public static function findIncompleted($region_id = false){
+	public static function findComplete($region_id){
+		return self::findByStatus(true, $region_id);
+	}
+	
+	public static function findIncomplete($region_id = false){
+		return self::findByStatus(false, $region_id);
+	}
+	
+	public static function findByStatus($complete, $region_id){
 		$l = array();
 		
+		$complete = (boolean)$complete;
+		
 		if($region_id){
-			
 			$region_id = (int)$region_id;
 			
 			if(!isset(self::$bind_region[$region_id])){
 				return $l;
 			}else{
 				foreach(self::$bind_region[$region_id] as $crc => $c){
-					if($c->stat < 0 || $c->stat_strict < 0){
+					if(($complete == false && ($c->stat < 0 || $c->stat_strict < 0)) || ($complete == true && $c->stat >= 0 && $c->stat_strict >= 0)){
 						$l[] = $c;
 					}
 				}
 			}
 		}else{
-			foreach(self::$bind_crc as $crc => $c){
-				if($c->stat < 0 || $c->stat_strict < 0){
-					$l[] = $c;
+			foreach (self::$bind_crc as $cc){
+				foreach($cc as $crc => $c){
+					if(($complete == false && ($c->stat < 0 || $c->stat_strict < 0)) || ($complete == true && $c->stat >= 0 && $c->stat_strict >= 0)){
+						$l[] = $c;
+					}
 				}
 			}
 		}
