@@ -9,25 +9,117 @@ class YADWord {
 	
 	public $original;
 	public $word;
+	public $strict;
 	public $crc;
 	
 	public $stat = -1;
 	public $stat_strict = -1;
 	
-	public function __construct($w, $r){
+	public function __construct($w, $r, $s, $ss){
 		$this->region_id = (int)$r;
 		$this->original = $w;
 		$this->word = self::prepare($w);
+		$this->strict = '!'.str_replace(' ', ' !', $this->word);
 		$this->crc = crc32(str_replace(' ','-',$this->word));
+		$this->stat = (int)$s;
+		$this->stat_strict = (int)$ss;
+		
+		if(!isset(self::$bind_region[$this->region_id])) self::$bind_region[$this->region_id] = array();
 		
 		// BIND link by region code
 		self::$bind_region[$this->region_id][$this->crc] = &$this;
 		
 		// BIND link by crc32
-		self::$bind_crc[$this->crc] = &$this;
+		self::$bind_crc[$this->crc][] = &$this;
 	}
 	
-	public static function get($w, $r){
+	public static function get($w, $r, $stat = -1, $stat_strict = -1){
+		if($i = self::findByRegionCRC($w, $r)){
+			return $i;
+		}
+		
+		$i = new self($w, $r, $stat, $stat_strict);
+		
+		return $i;
+	}
+	
+	public static function findIncompleted($region_id = false){
+		$l = array();
+		
+		if($region_id){
+			
+			$region_id = (int)$region_id;
+			
+			if(!isset(self::$bind_region[$region_id])){
+				return $l;
+			}else{
+				foreach(self::$bind_region[$region_id] as $crc => $c){
+					
+					var_dump($c);
+					sleep(2);
+					if($c->stat < 0 || $c->stat_strict < 0){
+						$l[] = $c;
+					}
+				}
+			}
+		}else{
+			foreach(self::$bind_crc as $crc => $c){
+				if($c->stat < 0 || $c->stat_strict < 0){
+					$l[] = $c;
+				}
+			}
+		}
+		
+		return $l;
+	}
+	
+	/**
+	 * Return array of YADWord found by region code
+	 * @param int|string $r Region code
+	 * @param array $filter Search Options
+	 * return YADWord|boolean
+	 */
+	public static function findByRegion($r, $filter = array()){
+		$r = (int)$r;
+		
+		if(isset(self::$bind_region[$r])){
+			if(!count($filter)) return self::$bind_region[$r];
+			else{
+				$l = array();
+				foreach(self::$bind_region[$r] as $crc => $c){
+					foreach($filer as $named => $val){
+						switch($named){
+							case 'original':
+								if($c->original != $val)
+									continue 2;
+								break;
+							case 'stat':
+								if($val && ($c->stat < 0 || $c->stat_strict < 0))
+									continue 2;
+								if(!$val && ($c->stat >= 0 && $c->stat_strict >= 0))
+									continue 2;
+								break;
+							case 'crc':
+								if($crc != $val)
+									continue 2;
+								break;
+						}
+					}
+					$l[] = &$c;
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Return copy of YADWord found by region code
+	 * @param string $w Word
+	 * @param int|string $r Region code
+	 * return YADWord|boolean
+	 */
+	public static function findByRegionCRC($w, $r){
 		$word = self::prepare($w);
 		$r = (int)$r;
 		$crc = crc32(str_replace(' ','-',$word));
@@ -35,10 +127,21 @@ class YADWord {
 		if(isset(self::$bind_region[$r][$crc])){
 			return self::$bind_region[$r][$crc];
 		}
-			
-		$i = new self($w, $r);
 		
-		return $i;
+		return false;
+	}
+	
+	/**
+	 * Return found array of YADWord by CRC
+	 * @param int|string $crc
+	 * @return array|boolean
+	 */
+	public static function findByCRC($crc){
+		$crc = (int)$crc;
+		if(isset(self::$bind_crc[$crc])){
+			return self::$bind_crc[$crc];
+		}
+		return false;
 	}
 	
 	/**
