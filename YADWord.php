@@ -54,9 +54,6 @@ class YADWord {
 				return $l;
 			}else{
 				foreach(self::$bind_region[$region_id] as $crc => $c){
-					
-					var_dump($c);
-					sleep(2);
 					if($c->stat < 0 || $c->stat_strict < 0){
 						$l[] = $c;
 					}
