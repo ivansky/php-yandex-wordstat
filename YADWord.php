@@ -19,8 +19,9 @@ class YADWord {
 		$this->region_id = (int)$r;
 		$this->original = $w;
 		$this->word = self::prepare($w);
-		$this->strict = '!'.str_replace(' ', ' !', $this->word);
+		$this->strict = '"!'.str_replace(' ', ' !', $this->word).'"';
 		$this->crc = crc32(str_replace(' ','-',$this->word));
+		$this->hash = crc32(str_replace(' ','-',$this->word).'-'.$this->region_id);
 		$this->stat = (int)$s;
 		$this->stat_strict = (int)$ss;
 		
@@ -33,8 +34,27 @@ class YADWord {
 		self::$bind_crc[$this->crc][] = &$this;
 	}
 	
+	public static function count($repeat = false){
+		if(!$repeat) return count(self::$bind_crc);
+		$i = 0;
+		foreach (self::$bind_crc as $crc => $a){
+			$i += count($a);
+		}
+		return $i;
+	}
+	
+	public function setStat($stat){
+		$this->stat = $stat;
+	}
+	
+	public function setStatStrict($stat){
+		$this->stat_strict = $stat;
+	}
+	
 	public static function get($w, $r, $stat = -1, $stat_strict = -1){
 		if($i = self::findByRegionCRC($w, $r)){
+			if($stat >= 0) $i->stat = $stat;
+			if($stat_strict >= 0) $i->stat_strict = $stat_strict;
 			return $i;
 		}
 		
@@ -43,17 +63,17 @@ class YADWord {
 		return $i;
 	}
 	
-	public static function findComplete($region_id){
-		return self::findByStatus(true, $region_id);
+	public static function findComplete($region_id = false, $limit = false){
+		return self::findByStatus(true, $region_id, $limit);
 	}
 	
-	public static function findIncomplete($region_id = false){
-		return self::findByStatus(false, $region_id);
+	public static function findIncomplete($region_id = false, $limit = false){
+		return self::findByStatus(false, $region_id, $limit);
 	}
 	
-	public static function findByStatus($complete, $region_id){
+	public static function findByStatus($complete, $region_id, $limit = false){
 		$l = array();
-		
+		$i = 0;
 		$complete = (boolean)$complete;
 		
 		if($region_id){
@@ -65,7 +85,9 @@ class YADWord {
 				foreach(self::$bind_region[$region_id] as $crc => $c){
 					if(($complete == false && ($c->stat < 0 || $c->stat_strict < 0)) || ($complete == true && $c->stat >= 0 && $c->stat_strict >= 0)){
 						$l[] = $c;
+						$i++;
 					}
+					if($limit && $limit <= $i) break 2;
 				}
 			}
 		}else{
@@ -73,7 +95,9 @@ class YADWord {
 				foreach($cc as $crc => $c){
 					if(($complete == false && ($c->stat < 0 || $c->stat_strict < 0)) || ($complete == true && $c->stat >= 0 && $c->stat_strict >= 0)){
 						$l[] = $c;
+						$i++;
 					}
+					if($limit && $limit <= $i) break 2;
 				}
 			}
 		}
@@ -109,6 +133,10 @@ class YADWord {
 								break;
 							case 'crc':
 								if($crc != $val)
+									continue 2;
+								break;
+							case 'hash':
+								if($c->hash != $val)
 									continue 2;
 								break;
 						}
